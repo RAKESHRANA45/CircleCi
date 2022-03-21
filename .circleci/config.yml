@@ -1,1 +1,21 @@
-
+workflows:
+   version: 2
+   install-and-check-env:
+     jobs:
+        - terraform-init:
+           filters:
+             branches:
+               only: main
+        - terraform-plan:
+           requires:
+             - terraform-init
+        - hold-for-approval:
+           type: approval
+           requires:
+             - terraform-plan
+        - terraform-apply-approval:
+           requires:
+             - hold-for-approval
+        - scan:
+           requires:
+             - terraform-apply-approval
