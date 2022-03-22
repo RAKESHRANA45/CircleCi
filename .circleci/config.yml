@@ -221,16 +221,16 @@ workflows:
             - plan
           filters:
             branches:
-              only: master
+              only: main
       - apply-with-approval:
           requires:
             - approve
           filters:
             branches:
-              only: master
+              only: main
       - apply:
           requires:
             - plan
           filters:
             branches:
-              only: staging
+              only: main
