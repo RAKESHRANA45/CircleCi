@@ -2,235 +2,123 @@
 #
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
-version: 2
-
-defaults: &defaults
-    docker:
-      - image: circleci/python:3.6.1
-    working_directory: ~/project
-    environment:
-      TF_IN_AUTOMATION: true
-
-tf-install: &tf-install
-  run:
-    name: tf-install
-    command: |
-      wget https://releases.hashicorp.com/terraform/0.12.20/terraform_0.12.20_linux_amd64.zip
-      sudo unzip terraform_0.12.20_linux_amd64.zip -d /usr/bin
-      rm terraform_0.12.20_linux_amd64.zip
-      terraform --version
-jobs:
-  terraform-init:
-    <<: *defaults
-    steps:
-      - checkout
-      - *tf-install
-      - run:
-          name: init
-          command: terraform init -input=false
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - .
-
-  terraform-plan:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: ~/project
-      - *tf-install
-      - run:
-         name: plan
-         command: terraform plan -out=plan.tfplan -input=false
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - .
-
-  terraform-apply-approval:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: ~/project
-      - *tf-install
-      - run:
-         name: apply
-         command: |
-           # Uncomment the line below to allow CircleCI to apply the Terraform
-           # terraform apply -input=false -auto-approve plan.tfplan
-           echo Uncomment line 61 of config.yml to let CircleCI apply the Terraform
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - .
-
-  scan:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: ~/project
-      - run:
-         name: scan-env
-         command: |
-           wget -O fugue https://github.com/fugue/fugue-client/releases/download/v0.13.1/fugue-linux-amd64
-           chmod +x fugue
-           sudo mv fugue /usr/local/bin
-           set -e
-           bash ./scan.sh
-         
-workflows:
-   version: 2
-   install-and-check-env:
-     jobs:
-        - terraform-init:
-           filters:
-             branches:
-               only: main
-        - terraform-plan:
-           requires:
-             - terraform-init
-        - hold-for-approval:
-           type: approval
-           requires:
-             - terraform-plan
-        - terraform-apply-approval:
-           requires:
-             - hold-for-approval
-        - scan:
-           requires:
-             - terraform-apply-approval
 # version: 2
 
-# references:
+# defaults: &defaults
+#     docker:
+#       - image: circleci/python:3.6.1
+#     working_directory: ~/project
+#     environment:
+#       TF_IN_AUTOMATION: true
 
-# base_image: &base_image
-#   hashicorp/terraform:light
-
-# working_directory: &working_directory
-#   ~/example
-
-# default_config: &default_config
-#   docker:
-#     - image: *base_image
-#   working_directory: *working_directory
-#   environment:
-#     BASH_ENV: /root/.bashrc
-
-# repo_cache_key: &repo_cache_key
-#   v1-repo-{{ .Branch }}-{{ .Revision }}
-
-# # Step to restore repository from cache
-# restore_repo: &restore_repo
-#   restore_cache:
-#     key: *repo_cache_key
-
-# save_repo: &save_repo
-#   save_cache:
-#     key: *repo_cache_key
-#     paths:
-#       - *working_directory
-
-# set_terraform_environment: &set_terraform_environment
+# tf-install: &tf-install
 #   run:
-#     name: set terraform environment
+#     name: tf-install
 #     command: |
-#       cd && touch $BASH_ENV
-#       if [ "${CIRCLE_BRANCH}" == "main" ]; then
-#         echo 'export TERRAFORM_ENVIRONMENT=production' >> $BASH_ENV
-#       else
-#         echo 'export TERRAFORM_ENVIRONMENT=staging' >> $BASH_ENV
-#       fi
-# terraform_init: &terraform_init
-#   run:
-#     name: terraform init
-#     command: |
-#       source $BASH_ENV
-#       cd environments/$TERRAFORM_ENVIRONMENT
-#       terraform init
-# apply_job: &apply_job
-#   <<: *default_config
-#   steps:
-#     - *restore_repo
-#     - *set_terraform_environment
-#     - *terraform_init
-#     - attach_workspace:
-#         at: *working_directory
-#     - run:
-#         name: terraform apply
-#         command: |
-#           source $BASH_ENV
-#           cd environments/$TERRAFORM_ENVIRONMENT
-#           terraform apply --auto-approve ../../terraform.plan
+#       wget https://releases.hashicorp.com/terraform/0.12.20/terraform_0.12.20_linux_amd64.zip
+#       sudo unzip terraform_0.12.20_linux_amd64.zip -d /usr/bin
+#       rm terraform_0.12.20_linux_amd64.zip
+#       terraform --version
 # jobs:
-
-#   build:
-#     <<: *default_config
+#   terraform-init:
+#     <<: *defaults
 #     steps:
 #       - checkout
-#       - *set_terraform_environment
+#       - *tf-install
 #       - run:
-#           name: terraform fmt
-#           command: |
-#             source $BASH_ENV
-#             cd environments/$TERRAFORM_ENVIRONMENT
-#             if [ $(terraform fmt | grep -v .terraform | tee fmt_result.txt | wc -l) -gt 0 ]; then
-#               echo "Format of this terraform files is not appropiate:"
-#               echo
-#               cat fmt_result.txt
-#               rm fmt_result.txt
-#               git checkout -- .
-#               echo
-#               echo "Please run terraform fmt"
-#               exit 1
-#             fi
-#       - *save_repo
-
-#   plan:
-#     <<: *default_config
-#     steps:
-#       - *restore_repo
-#       - *set_terraform_environment
-#       - *terraform_init
-#       - run:
-#           name: terraform plan
-#           command: |
-#             source $BASH_ENV
-#             cd environments/$TERRAFORM_ENVIRONMENT
-#             terraform plan -out=../../terraform.plan
+#           name: init
+#           command: terraform init -input=false
 #       - persist_to_workspace:
-#           root: *working_directory
+#           root: ~/project
 #           paths:
-#             - terraform.plan
+#             - .
 
-#   apply:
-#     <<: *apply_job
-#   apply-with-approval:
-#     <<: *apply_job
+#   terraform-plan:
+#     <<: *defaults
+#     steps:
+#       - attach_workspace:
+#           at: ~/project
+#       - *tf-install
+#       - run:
+#          name: plan
+#          command: terraform plan -out=plan.tfplan -input=false
+#       - persist_to_workspace:
+#           root: ~/project
+#           paths:
+#             - .
 
+#   terraform-apply-approval:
+#     <<: *defaults
+#     steps:
+#       - attach_workspace:
+#           at: ~/project
+#       - *tf-install
+#       - run:
+#          name: apply
+#          command: |
+#            # Uncomment the line below to allow CircleCI to apply the Terraform
+#            # terraform apply -input=false -auto-approve plan.tfplan
+#            echo Uncomment line 61 of config.yml to let CircleCI apply the Terraform
+#       - persist_to_workspace:
+#           root: ~/project
+#           paths:
+#             - .
+
+#   scan:
+#     <<: *defaults
+#     steps:
+#       - attach_workspace:
+#           at: ~/project
+#       - run:
+#          name: scan-env
+#          command: |
+#            wget -O fugue https://github.com/fugue/fugue-client/releases/download/v0.13.1/fugue-linux-amd64
+#            chmod +x fugue
+#            sudo mv fugue /usr/local/bin
+#            set -e
+#            bash ./scan.sh
+         
 # workflows:
-#   version: 2
-#   build_plan_approve_apply:
-#     jobs:
-#       - build
-#       - plan:
-#           requires:
-#             - build
-#       - approve:
-#           type: approval
-#           requires:
-#             - plan
-#           filters:
-#             branches:
-#               only: main
-#       - apply-with-approval:
-#           requires:
-#             - approve
-#           filters:
-#             branches:
-#               only: main
-#       - apply:
-#           requires:
-#             - plan
-#           filters:
-#             branches:
-#               only: main
+#    version: 2
+#    install-and-check-env:
+#      jobs:
+#         - terraform-init:
+#            filters:
+#              branches:
+#                only: main
+#         - terraform-plan:
+#            requires:
+#              - terraform-init
+#         - hold-for-approval:
+#            type: approval
+#            requires:
+#              - terraform-plan
+#         - terraform-apply-approval:
+#            requires:
+#              - hold-for-approval
+#         - scan:
+#            requires:
+#              - terraform-apply-approval
+version: '2.1'
+orbs:
+  terraform: circleci/terraform@3.0.1
+workflows:
+  deploy_infrastructure:
+    jobs:
+      - terraform/validate:
+          checkout: true
+          context: terraform
+      - terraform/plan:
+          checkout: true
+          context: terraform
+          persist-workspace: true
+          requires:
+            - terraform/validate
+      - terraform/apply:
+          attach-workspace: true
+          context: terraform
+          filters:
+            branches:
+              only: main
+          requires:
+            - terraform/plan
