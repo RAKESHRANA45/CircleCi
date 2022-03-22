@@ -99,15 +99,13 @@
 #         - scan:
 #            requires:
 #              - terraform-apply-approval
-version: 2
-
+version: '2.1'
 defaults: &defaults
     docker:
       - image: circleci/python:3.6.1
     working_directory: ~/project
     environment:
       TF_IN_AUTOMATION: true
-version: '2.1'
 orbs:
   terraform: circleci/terraform@3.0.1
 workflows:
